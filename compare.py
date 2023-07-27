@@ -44,14 +44,6 @@ if __name__ == "__main__":
     top_cols = topology_features.columns
     net_cols = network_features.columns
 
-    def extract_test_p_value(results, test_lag, test_name):
-        return (
-            results.applymap(
-                lambda cell: cell[test_lag][0][test_name][1] if not pd.isna(cell) else 1
-            )
-            < 0.05
-        )
-
     network_predicts_topology = [
         pd.DataFrame(columns=top_cols, index=net_cols) for i in range(test_lag)
     ]
@@ -67,16 +59,15 @@ if __name__ == "__main__":
             compare = pd.concat(
                 [topology_features[top_col], network_features[net_col]], axis=1
             )
-            result = grangercausalitytests(compare, test_lag=test_lag, verbose=False)
+            result = grangercausalitytests(compare, maxlag=test_lag, verbose=False)
             for i in range(test_lag):
-                print(f"Index {i}")
                 network_predicts_topology[i][top_col][net_col] = result[i + 1][0][
                     test_name
                 ][1]
             compare = pd.concat(
                 [network_features[net_col], topology_features[top_col]], axis=1
             )
-            result = grangercausalitytests(compare, test_lag=test_lag, verbose=False)
+            result = grangercausalitytests(compare, maxlag=test_lag, verbose=False)
             for i in range(test_lag):
                 topology_predicts_network[i][net_col][top_col] = result[i + 1][0][
                     test_name

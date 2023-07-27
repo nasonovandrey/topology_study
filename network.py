@@ -42,8 +42,11 @@ def granger_causality_test(df, cointegrated_pairs, max_lag, test_name):
     for pair in cointegrated_pairs:
         col1, col2, cointegration_value = pair
         data = df[[col1, col2]]
-        result = grangercausalitytests(data, max_lag, verbose=False)
-        results[pair] = [result[i + 1][0][test_name][1] for i in range(max_lag)]
+        if df[col1].var() > .1 and df[col2].var() > .1:
+            result = grangercausalitytests(data, max_lag, verbose=False)
+            results[pair] = [result[i + 1][0][test_name][1] for i in range(max_lag)]
+        else:
+            results[pair] = [1]
     return results
 
 
