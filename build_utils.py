@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from read_utils import prepare_sample
-from correlation_network import build_adjacency_matrix
+from network import build_adjacency_matrix
 from network_features import extract_network_features
 from gtda.homology import VietorisRipsPersistence
 from gtda.diagrams import Amplitude, PersistenceEntropy
@@ -17,9 +17,9 @@ amplitude_modes = [
 ]
 
 
-def build_network_features(sample_size=None, window_size=60):
+def build_network_features(sample_size=None, window_size=60, max_lag=5):
     sample, index = prepare_sample(sample_size, window_size)
-    matrices = [build_adjacency_matrix(df) for df in sample]
+    matrices = [build_adjacency_matrix(df, max_lag=max_lag) for df in sample]
     network_features = extract_network_features(matrices)
     network_features.set_index(index, inplace=True)
     return network_features
