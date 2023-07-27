@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from read_utils import read, window_generator
+from read_utils import prepare_sample
 from correlation_network import build_adjacency_matrix
-from graph_features import extract_graph_features
+from network_features import extract_network_features
 from gtda.homology import VietorisRipsPersistence
 from gtda.diagrams import Amplitude, PersistenceEntropy
 
@@ -17,14 +17,16 @@ amplitude_modes = [
 ]
 
 
-def build_graph_features(sample, index):
+def build_network_features(sample_size=None, window_size=60):
+    sample, index = prepare_sample(sample_size, window_size)
     matrices = [build_adjacency_matrix(df) for df in sample]
-    graph_features = extract_graph_features(matrices)
-    graph_features.set_index(index, inplace=True)
-    return graph_features
+    network_features = extract_network_features(matrices)
+    network_features.set_index(index, inplace=True)
+    return network_features
 
 
-def build_top_features(sample, index, dimensions=2):
+def build_topology_features(sample_size=None, window_size=60, dimensions=2):
+    sample, index = prepare_sample(sample_size, window_size)
     dimensions = range(dimensions)
     VR = VietorisRipsPersistence(homology_dimensions=list(dimensions))
     diagrams = VR.fit_transform(sample)
@@ -45,9 +47,9 @@ def build_top_features(sample, index, dimensions=2):
             columns=amplitude_columns, data=A.fit_transform(diagrams)
         )
 
-    top_features = persistence_results
+    topology_features = persistence_results
     for df in amplitude_results.values():
-        top_features = top_features.join(df)
+        topology_features = topology_features.join(df)
 
-    top_features.set_index(index, inplace=True)
-    return top_features
+    topology_features.set_index(index, inplace=True)
+    return topology_features

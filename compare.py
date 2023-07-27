@@ -2,32 +2,8 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import grangercausalitytests
 
-maxlag = 10
-tests = ["ssr_ftest", "ssr_chi2test", "lrtest", "params_ftest"]
+import argparse
 
-top_features = pd.read_csv("top_features.csv", index_col="date")
-graph_features = pd.read_csv("graph_features.csv", index_col="date")
-
-top_columns = top_features.columns
-graph_columns = graph_features.columns
-
-
-graph_affects_top = pd.DataFrame(columns=top_columns, index=graph_columns)
-top_affects_graph = pd.DataFrame(columns=graph_columns, index=top_columns)
-for top_col in top_columns:
-    for graph_col in graph_columns:
-        compare = pd.concat([top_features[top_col], graph_features[graph_col]], axis=1)
-        graph_affects_top[top_col][graph_col] = grangercausalitytests(
-            compare, maxlag=maxlag, verbose=False
-        )
-        compare = pd.concat([graph_features[graph_col], top_features[top_col]], axis=1)
-        top_affects_graph[graph_col][top_col] = grangercausalitytests(
-            compare, maxlag=maxlag, verbose=False
-        )
-
-
-def extract_test_p_value(results, maxlag, test_name):
-    return results.applymap(lambda cell: cell[maxlag][0][test_name][1]) < 0.05
 
 
 def present(result):
@@ -37,7 +13,52 @@ def present(result):
             filter_cols.append(column)
     return result[filter_cols]
 
+if __name__=="__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--sample_size', type=int)
+    parser.add_argument('--window_size', type=int)
+    parser.add_argument('--dimensions', type=int)
+    parser.add_argument('--maxlag', type=int)
+    parser.add_argument('--test_name', choices=["ssr_ftest", "ssr_chi2test", "lrtest", "params_ftest"])
+    args = parser.parse_args()
 
-for lag in range(1, maxlag + 1):
-    for name in tests:
-        print(present(extract_test_p_value(graph_affects_top, lag, name)))
+    maxlag = args.maxlag
+    sample_size = args.sample_size
+    window_size = args.window_size
+    dimensions = args.dimensions
+    test_name = args.test_name
+
+    topology_features = pd.read_csv(f"features/topology_features_s{sample_size}_w{window_size}_d{dimensions}.csv", index_col="date")
+    network_features = pd.read_csv(f"features/network_features_s{sample_size}_w{window_size}.csv", index_col="date")
+
+    top_cols = topology_features.columns
+    net_cols = network_features.columns
+
+    def extract_test_p_value(results, maxlag, test_name):
+        return results.applymap(lambda cell: cell[maxlag][0][test_name][1] if not pd.isna(cell) else 1) < 0.05
+    network_predicts_topology = [pd.DataFrame(columns=top_cols, index=net_cols) for i in range(maxlag)]
+    topology_predicts_network = [pd.DataFrame(columns=net_cols, index=top_cols) for i in range(maxlag)]
+    for top_col in top_cols:
+        if topology_features[top_col].var() < 0.03:
+            continue
+        for net_col in net_cols:
+            if network_features[net_col].var() < 0.03:
+                continue
+            compare = pd.concat([topology_features[top_col], network_features[net_col]], axis=1)
+            result = grangercausalitytests(
+                compare, maxlag=maxlag, verbose=False
+            )
+            for i in range(maxlag):
+                print(f"Index {i}")
+                network_predicts_topology[i][top_col][net_col] = result[i+1][0][test_name][1]
+            compare = pd.concat([network_features[net_col], topology_features[top_col]], axis=1)
+            result = grangercausalitytests(
+                compare, maxlag=maxlag, verbose=False
+            )
+            for i in range(maxlag):
+                topology_predicts_network[i][net_col][top_col] = result[i+1][0][test_name][1]
+
+    for ind, df in enumerate(network_predicts_topology):
+        df.to_csv(f"predictions/network_predicts_topology_l{ind+1}_s{sample_size}_w{window_size}_d{dimensions}.csv")
+    for ind, df in enumerate(topology_predicts_network):
+        df.to_csv(f"predictions/topology_predicts_network_l{ind+1}_s{sample_size}_w{window_size}_d{dimensions}.csv")

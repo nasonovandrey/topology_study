@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-# TBD: Estimate the robustness and resilience, estimate the number of feedback loops
-
 
 def dfs(node, adj_matrix, visited):
     # Mark the current node as visited
@@ -46,7 +44,7 @@ def clusters_count(adj_matrix):
     return num_clusters
 
 
-def extract_graph_features(matrices):
+def extract_network_features(matrices):
     features = {"average_links": list(), "density": list(), "clusters_count": list()}
     for matrix in matrices:
         features["average_links"].append(average_links(matrix))

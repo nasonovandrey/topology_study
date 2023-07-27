@@ -1,6 +1,20 @@
 import pandas as pd
 
 
+def prepare_sample(sample_size=None, window_size=60):
+    data = read()
+    wingen = window_generator(data, size=window_size)
+    if sample_size:
+        sample = [next(wingen) for _ in range(sample_size)]
+    else:
+        sample = [window for window in wingen]
+        sample_size = len(sample)
+
+    index = data.index[:sample_size]
+
+    return sample, index
+
+
 def read(num_columns=None, threshold=0.3):
     df = pd.read_csv("stocks/all_stocks_5yr.csv", index_col="date", parse_dates=True)
     # Pivot each series into column
