@@ -25,7 +25,7 @@ def build_topology_structures(sample_size=None, window_size=60, dim=5):
     sample, index = prepare_sample(sample_size, window_size)
     sample_size = len(sample)
     dimensions = range(dim)
-    VR = VietorisRipsPersistence(homology_dimensions=list(dimensions))
+    VR = VietorisRipsPersistence(homology_dimensions=list(dimensions), n_jobs=-1)
     diagrams = VR.fit_transform(sample)
     print(f"Saving diagrams of size {sample_size} between {index[0]} and {index[-1]}")
     for i, (ts, df) in enumerate(zip(index, diagrams)):
