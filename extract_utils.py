@@ -77,7 +77,7 @@ def extract_network_features(matrices, index):
 
 def extract_topology_features(diagrams, index):
     dimensions = list(range(diagrams.shape[-1] + 1))
-    PE = PersistenceEntropy()
+    PE = PersistenceEntropy(n_jobs=-1)
     persistence_results = PE.fit_transform(diagrams)
 
     entropy_columns = [f"entropy_hom{dim}" for dim in dimensions]
@@ -88,7 +88,7 @@ def extract_topology_features(diagrams, index):
     amplitude_results = {}
     for mode in amplitude_modes:
         amplitude_columns = [f"{mode}_hom{dim}" for dim in dimensions]
-        A = Amplitude(mode)
+        A = Amplitude(mode, n_jobs=-1)
         amplitude_results[mode] = pd.DataFrame(
             columns=amplitude_columns, data=A.fit_transform(diagrams)
         )
