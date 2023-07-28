@@ -14,7 +14,6 @@ def build_network_structures(sample_size=None, window_size=60, lag=5):
     for i, (ts, df) in enumerate(zip(index, sample)):
         matrix = build_adjacency_matrix(df, max_lag=lag)
         timestamp = datetime.strftime(ts, "%Y%m%d%H%M%S")
-        print(matrix)
         filename = (
             f"structures/network_t{timestamp}_s{sample_size}_w{window_size}_l{lag}.csv"
         )
@@ -28,12 +27,11 @@ def build_topology_structures(sample_size=None, window_size=60, dim=5):
     dimensions = range(dim)
     VR = VietorisRipsPersistence(homology_dimensions=list(dimensions))
     diagrams = VR.fit_transform(sample)
-    breakpoint()
+    print(f"Saving diagrams of size {sample_size} between {index[0]} and {index[-1]}")
     for i, (ts, df) in enumerate(zip(index, diagrams)):
         timestamp = datetime.strftime(ts, "%Y%m%d%H%M%S")
         filename = (
             f"structures/topology_t{timestamp}_s{sample_size}_w{window_size}_d{dim}.csv"
         )
-        print(df)
         np.savetxt(filename, df, delimiter=",")
         print(f"File {filename} saved, {i+1} of {sample_size}")
