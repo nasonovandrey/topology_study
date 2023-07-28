@@ -42,13 +42,3 @@ def clusters_count(adj_matrix):
             num_clusters += 1
 
     return num_clusters
-
-
-def extract_network_features(matrices):
-    features = {"average_links": list(), "density": list(), "clusters_count": list()}
-    for matrix in matrices:
-        features["average_links"].append(average_links(matrix))
-        features["density"].append(density(matrix))
-        features["clusters_count"].append(clusters_count(matrix))
-
-    return pd.DataFrame(features)
