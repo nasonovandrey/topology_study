@@ -76,9 +76,9 @@ def extract_network_features(matrices, index):
 
 
 def extract_topology_features(diagrams, index):
-    dimensions = list(range(diagrams.shape[-1] + 1))
     PE = PersistenceEntropy(n_jobs=-1)
     persistence_results = PE.fit_transform(diagrams)
+    dimensions = list(range(persistence_results.shape[-1]))
 
     entropy_columns = [f"entropy_hom{dim}" for dim in dimensions]
     persistence_results = pd.DataFrame(
