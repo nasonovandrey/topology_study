@@ -25,12 +25,47 @@ from statsmodels.tsa.stattools import grangercausalitytests
 import argparse
 
 
-def present(result):
-    filter_cols = []
-    for column in result.columns:
-        if any(result[column]):
-            filter_cols.append(column)
-    return result[filter_cols]
+def perform_granger_causality_test(
+    df1, df2, maxlag, significance_level=0.05, test_name="ssr_ftest"
+):
+    combined_df = pd.concat([df1, df2], axis=1)
+    causality_graph = nx.DiGraph()
+
+    for col1 in df1.columns:
+        print("Outer col")
+        print(col1)
+        print(combined_df[col1])
+        if df1[col1].var() < 0.1:
+            continue
+        for col2 in df2.columns:
+            print("Inner col")
+            print(col2)
+            print(combined_df[col2])
+            if df2[col2].var() < 0.3:
+                continue
+            result = grangercausalitytests(
+                combined_df[[col1, col2]], maxlag=maxlag, verbose=False
+            )
+            p_value = result[maxlag][0][test_name][1]
+            if p_value < significance_level:
+                print("Adding edge")
+                causality_graph.add_edge(col1, col2)
+
+    return causality_graph
+
+
+def draw_causality_graph(causality_graph):
+    pos = nx.spring_layout(causality_graph, seed=42)
+    nx.draw(
+        causality_graph,
+        pos,
+        with_labels=True,
+        node_size=2000,
+        node_color="skyblue",
+        font_size=12,
+        font_weight="bold",
+    )
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -63,47 +98,6 @@ if __name__ == "__main__":
         f"features/network_features_s{sample_size}_w{window_size}_l{lag}.csv",
         index_col=[0],
     )
-
-    def perform_granger_causality_test(
-        df1, df2, maxlag, significance_level=0.05, test_name="ssr_ftest"
-    ):
-        combined_df = pd.concat([df1, df2], axis=1)
-        causality_graph = nx.DiGraph()
-
-        for col1 in df1.columns:
-            print("Outer col")
-            print(col1)
-            print(combined_df[col1])
-            if df1[col1].var() < 0.1:
-                continue
-            for col2 in df2.columns:
-                print("Inner col")
-                print(col2)
-                print(combined_df[col2])
-                if df2[col2].var() < 0.3:
-                    continue
-                result = grangercausalitytests(
-                    combined_df[[col1, col2]], maxlag=maxlag, verbose=False
-                )
-                p_value = result[maxlag][0][test_name][1]
-                if p_value < significance_level:
-                    print("Adding edge")
-                    causality_graph.add_edge(col1, col2)
-
-        return causality_graph
-
-    def draw_causality_graph(causality_graph):
-        pos = nx.spring_layout(causality_graph, seed=42)
-        nx.draw(
-            causality_graph,
-            pos,
-            with_labels=True,
-            node_size=2000,
-            node_color="skyblue",
-            font_size=12,
-            font_weight="bold",
-        )
-        plt.show()
 
     causality_graph = perform_granger_causality_test(
         topology_features,
