@@ -7,6 +7,7 @@ from statsmodels.tsa.stattools import grangercausalitytests
 
 import argparse
 
+
 def perform_granger_causality_test(
     df1, df2, maxlag, significance_level=0.05, test_name="ssr_ftest"
 ):
@@ -29,6 +30,7 @@ def perform_granger_causality_test(
 
     return causality_graph
 
+
 def draw_causality_graph(causality_graph, df1_columns, df2_columns, output_filename):
     # Set the positions of the nodes explicitly using a circular layout
     pos = nx.circular_layout(causality_graph)
@@ -37,18 +39,38 @@ def draw_causality_graph(causality_graph, df1_columns, df2_columns, output_filen
     node_size = 1000
 
     # Draw the causality graph with larger arrowheads and different node colors
-    nx.draw(causality_graph, pos, with_labels=False, node_size=node_size,
-            font_size=12, font_weight='bold', alpha=0.8, edge_color='gray', arrowsize=20,
-            node_color=[('skyblue' if node in df1_columns else 'lightcoral') for node in causality_graph.nodes()])
+    nx.draw(
+        causality_graph,
+        pos,
+        with_labels=False,
+        node_size=node_size,
+        font_size=12,
+        font_weight="bold",
+        alpha=0.8,
+        edge_color="gray",
+        arrowsize=20,
+        node_color=[
+            ("skyblue" if node in df1_columns else "lightcoral")
+            for node in causality_graph.nodes()
+        ],
+    )
 
     # Set node label positions slightly away from the nodes for better visibility
-    labels = nx.draw_networkx_labels(causality_graph, pos, font_size=10, font_color='black', font_weight='bold', verticalalignment='center', bbox=dict(boxstyle='round', edgecolor='white', facecolor='white', alpha=0.7))
+    labels = nx.draw_networkx_labels(
+        causality_graph,
+        pos,
+        font_size=10,
+        font_color="black",
+        font_weight="bold",
+        verticalalignment="center",
+        bbox=dict(boxstyle="round", edgecolor="white", facecolor="white", alpha=0.7),
+    )
 
     # Increase the space between nodes and labels for better readability
     for label in labels:
         labels[label]._y -= 0.05
 
-    plt.savefig(output_filename, format='jpg', dpi=300)
+    plt.savefig(output_filename, format="jpg", dpi=300)
 
     # Show the plot
     plt.show()
