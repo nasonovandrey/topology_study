@@ -5,9 +5,17 @@ from numpy import genfromtxt
 import pandas as pd
 from read_utils import prepare_sample
 from network import build_adjacency_matrix
-from network_features import average_links, density, clusters_count
+from network_features import (
+    average_links,
+    density,
+    num_connected_components,
+    shortest_average_path,
+    clustering_coefficient,
+    diameter,
+)
 from gtda.homology import VietorisRipsPersistence
 from gtda.diagrams import Amplitude, PersistenceEntropy
+import networkx as nx
 from pathlib import Path
 
 amplitude_modes = [
@@ -63,12 +71,34 @@ def load_network_structures(sample_size, window_size, lag):
     return results
 
 
+def build_graph(adj_matrix):
+    G = nx.Graph()
+    G.add_nodes_from(range(len(adj_matrix)))
+
+    for i in range(len(adj_matrix)):
+        for j in range(i + 1, len(adj_matrix[i])):
+            if adj_matrix[i][j] != 0:
+                G.add_edge(i, j)
+    return G
+
+
 def extract_network_features(matrices, index):
-    features = {"average_links": list(), "density": list(), "clusters_count": list()}
+    features = {
+        "average_links": list(),
+        "shortest_average_path": list(),
+        "density": list(),
+        "num_connected_components": list(),
+        "clustering_coefficient": list(),
+        "diameter": list(),
+    }
     for matrix in matrices:
-        features["average_links"].append(average_links(matrix))
-        features["density"].append(density(matrix))
-        features["clusters_count"].append(clusters_count(matrix))
+        graph = build_graph(matrix)
+        features["average_links"].append(average_links(graph))
+        features["shortest_average_path"].append(shortest_average_path(graph))
+        features["density"].append(density(graph))
+        features["num_connected_components"].append(num_connected_components(graph))
+        features["clustering_coefficient"].append(clustering_coefficient(graph))
+        features["diameter"].append(diameter(graph))
 
     features = pd.DataFrame(features)
     features.index = index
