@@ -26,6 +26,7 @@ if __name__ == "__main__":
         f"features/topology_features_s{sample_size}_w{window_size}_d{dimensions}.csv",
         index_col=[0],
     )
+    print(topology_features.columns)
 
     network_features = pd.read_csv(
         f"features/network_features_s{sample_size}_w{window_size}_l{lag}.csv",
@@ -40,13 +41,15 @@ if __name__ == "__main__":
     scaled_data = scaler.fit_transform(selected_df.values)
     scaled_df = pd.DataFrame(
         scaled_data,
-        columns=["heat_hom0", "num_connected_components"],
+        columns=[args.network, args.topology],
         index=features_df.index,
     )
+    scaled_df[f"lagged_{args.network}"] = scaled_df[args.network].shift(-80)
 
     plt.figure(figsize=(10, 6))
     plt.plot(
         scaled_df.index, scaled_df[args.topology], color="green", label=args.topology
     )
-    plt.plot(scaled_df.index, scaled_df[args.network], color="blue", label=args.network)
+    plt.plot(scaled_df.index, scaled_df[f"lagged_{args.network}"], color="blue", label=args.network)
+    plt.savefig(f"compare_{args.network}_{args.topology}", format="jpg", dpi=300)
     plt.show()
